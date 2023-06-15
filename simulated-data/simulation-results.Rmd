@@ -1,0 +1,97 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+library(tidyverse)
+
+plot_results <- function(outlier_type) {
+    data_multiple <- read_csv(paste("results/csv/", outlier_type, "-multiple-cluster.csv", sep=""))
+    
+    data_single <- read_csv(paste("results/csv/", outlier_type, "-single-cluster.csv", sep=""))
+    
+    data <- bind_rows(data_multiple, data_single)
+    
+    data <- data %>%
+        mutate(rate=factor(rate, levels = c("true positive", "false positive"))) %>%
+        group_by(rate, cluster) %>%
+        mutate(method = fct_reorder(method, filter(., rate == "true positive" & cluster=="multiple") %>% pull(mean)))
+    
+    data <- data %>% filter(rate == "true positive")
+    
+    g <- ggplot(data, aes(y = method, x = mean, color=cluster)) +
+        # geom_segment(aes(x=0, xend=mean, yend=method), color="grey", size=0.1) +
+        geom_errorbar(aes(xmin = mean - sd/2, xmax = mean + sd/2), width = 0.4) +
+        geom_point(aes(shape=out_rate)) +
+        # facet_wrap(~ rate, ncol=1, scales = "free") +
+        theme_light() +
+        theme(
+            panel.border = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.ticks.y = element_blank(),
+            panel.grid.major.x = element_blank(),
+            panel.grid.minor.x = element_blank(),
+            axis.title.x = element_text(size = rel(1), margin = margin(t = 20, r = 0, b = 0, l = 0)),
+            axis.title.y = element_text(size = rel(1), margin = margin(t = 0, r = 20, b = 0, l = 0)),
+        ) +
+        scale_colour_manual(values=c("deeppink", "darkviolet"), labels=c("multiple clusters", "single cluster")) +
+        scale_shape_manual(values=c(16, 17), labels=c("doesn't need the outliers rate", "needs the outliers rate")) +
+        scale_x_continuous(labels = scales::label_percent(accuracy = 1L)) +
+        labs(
+            # title = paste(outlier_type, "outliers"),
+            shape = "",
+            color = "",
+        ) +
+        xlab("Accuracy rate") +
+        ylab("Method")
+         ggsave(file=paste(outlier_type, "_v2.svg", sep = ""), plot=g, width=10, height=3)
+         ggsave(file=paste(outlier_type, "_v2.png", sep = ""), plot=g, width=10, height=3)
+    return(g)
+}
+```
+
+```{r}
+# plot_results("shift")
+# plot_results("shift-h")
+# plot_results("isolated")
+# plot_results("amplitude")
+# plot_results("shape")
+```
+
+```{r}
+
+types = c("amplitude", "shift", "shift-h", "shape", "isolated")
+cluster_type = "single"
+df_latex = NULL
+for (outlier_type in types) {
+    data <- read_csv(paste("results/csv/", outlier_type, "-", cluster_type, "-cluster.csv", sep=""))
+    df_i <- data %>% mutate(mean = round(mean, 2), sd = round(sd, 2)) %>%
+    unite("result", mean, sd, sep = " (") %>%
+    mutate(result = paste(result, ")", sep = "")) %>% dplyr::select(method, result, rate) %>%
+    pivot_wider(names_from = rate, values_from = result)
+    
+    if (is.null(df_latex)) {
+        df_latex <- df_i
+    } else {
+        df_latex <- inner_join(df_latex, df_i, by = "method")
+    }
+}
+
+top_n(df_latex, 5)
+```
+
+```{r}
+
+library(kableExtra)
+
+col.names = c("Method", rep(c("$p_t$", "$p_f$"), length(types)))
+
+r <- knitr::kable(df_latex, format="latex", col.names = col.names, align = "lcccccccccc")
+```

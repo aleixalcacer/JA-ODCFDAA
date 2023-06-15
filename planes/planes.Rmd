@@ -1,0 +1,208 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+dataset <- read_table("planes/data/Plane_TRAIN.txt", col_names = FALSE)
+
+colnames(dataset) <- c("category", 1:145)
+
+dataset <- dataset %>% add_column(alpha=1, .after = 1)
+```
+
+
+```{r}
+
+plot_dataset <- function(s_dataset) {
+p_data <- s_dataset %>%
+    rownames_to_column() %>%
+    pivot_longer(-c(rowname, category, alpha)) %>%
+    mutate(name = as.integer(name), category = as.factor(category))
+
+    library(ggplot2)
+    g <- ggplot(p_data %>% group_by(category), aes(x = name, y = value, color = category, group = rowname, alpha=alpha)) +
+        geom_line() +
+        theme_light() +
+        theme(
+            panel.border = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.ticks.y = element_blank(),
+            panel.grid.major.x = element_blank(),
+            panel.grid.minor.x = element_blank(),
+            axis.title.x = element_text(size = rel(1), margin = margin(t = 20, r = 0, b = 0, l = 0)),
+            axis.title.y = element_text(size = rel(1), margin = margin(t = 0, r = 20, b = 0, l = 0)),
+        ) +
+        labs(
+            shape = "",
+            alpha = ""
+        ) +
+        scale_alpha(guide = 'none') +
+        xlab("time") +
+        ylab("value")
+
+    return(g)
+}
+```
+
+```{r}
+plot_dataset(dataset)
+ggsave("planes/results/planes.png")
+```
+
+```{r}
+source("methods/methods.R")
+```
+
+
+```{r}
+
+plot_outliers <- function(data, outliers) {
+    data <- data %>% rownames_to_column() %>%
+        mutate(alpha = if_else(rowname %in% outliers, 1, 0.1)) %>%
+        mutate(category = if_else(rowname %in% outliers, "outlier", "no outlier")) %>%
+        dplyr::select(-rowname)
+    
+    plot_dataset(data) +
+        scale_color_manual(values=c("grey", "deeppink"))    
+}
+
+generate_outliers_dataset <- function(data, outliers, method) {
+    data <- data %>% rownames_to_column() %>%
+        mutate(alpha = if_else(rowname %in% outliers, 1, 0.1)) %>%
+        mutate(category = if_else(rowname %in% outliers, "outlier", "no outlier")) %>%
+        add_column(method = method) %>%
+        dplyr::select(-rowname)
+    data
+}
+```
+
+```{r}
+data <- as.matrix(dataset[-c(1:2)])
+```
+
+```{r}
+aaknn <- AAKNN(data)
+d1 <- generate_outliers_dataset(dataset, aaknn, "FAA + KNN")
+plot_outliers(dataset, aaknn)
+ggsave("planes/results/FAAKNN.png")
+```
+
+```{r}
+aaknn <- OTRESH(data)
+d2 <- generate_outliers_dataset(dataset, aaknn, "FOADATH")
+plot_outliers(dataset, aaknn)
+ggsave("planes/results/FOADATH.png")
+```
+
+```{r}
+aaknn <- OMULTI(data)
+d3 <- generate_outliers_dataset(dataset, aaknn, "FOADARMAH")
+plot_outliers(dataset, aaknn)
+ggsave("planes/results/FOADARMAH.png")
+```
+
+
+```{r}
+aaknn <- RMAH(data, t = 1:144)
+d4 <- generate_outliers_dataset(dataset, aaknn, "RMAH")
+plot_outliers(dataset, aaknn)
+ggsave("planes/results/RMAH.png")
+```
+
+
+```{r}
+ise <- ISE(data, t = 1:144)
+d5 <- generate_outliers_dataset(dataset, ise, "ISFE")
+plot_outliers(dataset, ise)
+ggsave("planes/results/ISFE.png")
+
+```
+
+```{r}
+ise <- OGH(data, t = 1:144)
+d6 <- generate_outliers_dataset(dataset, ise, "OUG")
+plot_outliers(dataset, ise)
+ggsave("planes/results/OUG.png")
+
+```
+
+
+```{r}
+pond <- FADALARA(data, 2)
+d7 <- generate_outliers_dataset(dataset, pond, "CROFADALARA")
+plot_outliers(dataset, pond)
+ggsave("planes/results/CROFADALARA.png")
+```
+
+
+```{r}
+fom <- FOM(data)
+d8 <- generate_outliers_dataset(dataset, fom, "FOM")
+plot_outliers(dataset, fom)
+ggsave("planes/results/FOM.png")
+
+```
+
+```{r}
+fb <- FB(data)
+d9 <- generate_outliers_dataset(dataset, fb, "FB")
+plot_outliers(dataset, fb)
+ggsave("planes/results/FB.png")
+
+```
+
+```{r}
+d <- bind_rows(d1, d2, d3, d4, d5, d6, d7, d8, d9)
+```
+
+```{r}
+p_data <- d %>%
+    rownames_to_column() %>%
+    pivot_longer(-c(rowname, category, alpha, method)) %>%
+    mutate(name = as.integer(name), category = as.factor(category))
+```
+
+
+```{r}
+g <- ggplot(p_data %>% group_by(category), aes(x = name, y = value, color = category, group = rowname, alpha=alpha)) +
+    geom_line() +
+    theme_light() +
+    theme(
+        panel.border = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.title.x = element_text(size = rel(1), margin = margin(t = 20, r = 0, b = 0, l = 0)),
+        axis.title.y = element_text(size = rel(1), margin = margin(t = 0, r = 20, b = 0, l = 0)),
+    ) +
+    labs(
+        shape = "",
+        alpha = ""
+    ) +
+    scale_alpha(guide = 'none') +
+    xlab("time") +
+    ylab("value") +
+    facet_wrap(~method) +
+    scale_color_manual(values=c("grey", "deeppink"))    
+
+g
+
+
+ggsave("planes/results/outliers.png", width = 8, height = 5)
+```
+
+
+
+

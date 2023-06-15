@@ -1,0 +1,27 @@
+method,mean,sd,rate,cluster,out_rate
+FOADA-TH,0.3,0.48304589153964794,true positive,multiple,FALSE
+FOADA-RMAH,0,0,true positive,multiple,FALSE
+FADALARA,0.019999999999999997,0.06324555320336757,true positive,multiple,TRUE
+RMAH,0,0,true positive,multiple,FALSE
+ISFE,0.7,0.48304589153964794,true positive,multiple,FALSE
+OUG,0,0,true positive,multiple,FALSE
+LRT,0,0,true positive,multiple,TRUE
+TRIM,0,0,true positive,multiple,TRUE
+POND,0,0,true positive,multiple,FALSE
+FOM,0,0,true positive,multiple,FALSE
+FB,0,0,true positive,multiple,FALSE
+HDR,0.6,0.282842712474619,true positive,multiple,TRUE
+AAKNN,1,0,true positive,multiple,FALSE
+FOADA-TH,0.20842105263157895,0.05031143390578223,false positive,multiple,FALSE
+FOADA-RMAH,0.028421052631578948,0.06138846933615575,false positive,multiple,FALSE
+FADALARA,0.034736842105263156,0.02895534180460036,false positive,multiple,TRUE
+RMAH,0,0,false positive,multiple,FALSE
+ISFE,0.19157894736842104,0.10914480513870449,false positive,multiple,FALSE
+OUG,0.02736842105263158,0.014209443320222167,false positive,multiple,FALSE
+LRT,0,0,false positive,multiple,TRUE
+TRIM,0,0,false positive,multiple,TRUE
+POND,0,0,false positive,multiple,FALSE
+FOM,0,0,false positive,multiple,FALSE
+FB,0,0,false positive,multiple,FALSE
+HDR,0.021052631578947368,0.014886458551295736,false positive,multiple,TRUE
+AAKNN,0.056842105263157895,0.07577647711827698,false positive,multiple,FALSE

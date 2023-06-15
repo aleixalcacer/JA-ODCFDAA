@@ -1,0 +1,69 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+# Read csv from Desktop
+
+g1 <- read_csv("granulo/results/granulometry_b1.csv")
+g2 <- read_csv("granulo/results/granulometry_b2.csv")
+g3 <- read_csv("granulo/results/granulometry_b3.csv")
+
+# Join all dataframes by columns
+
+g <- bind_cols(g1, g2, g3)
+
+# Remove columns name
+colnames(g) <- seq_len(ncol(g))
+
+# Add row index as column
+
+g <- g %>% mutate(id = row_number())
+```
+
+
+```{r}
+source("methods/methods.R")
+```
+
+```{r}
+data <- as.matrix(g[, seq_len(ncol(g) - 1)])
+data
+```
+
+```{r}
+t <- seq_len(ncol(data))
+aaknn <- AAKNN(data, narch = 4, vi = 3, vf = 5)
+foada_th <- OTRESH(data)
+foada_rmah <- OMULTI(data)
+rmah <- RMAH(data, t)
+isfe <- ISE(data, t)
+oug <- OGH(data, t)
+fadalara <- FADALARA(data, k=2)
+fom <- FOM(data)
+fb <- FB(data)
+```
+
+```{r}
+# Save the results in a list using the name of the method as the name of the list element (capital letters)
+
+results <- list("FAA + KNN" = aaknn, "FOADATH" = foada_th, "FOADARMAH" = foada_rmah, "RMAH" = rmah, "ISFE" = isfe, "OUG" = oug, "CROFADALARA" = fadalara, "FOM" = fom, "FB" = fb)
+```
+
+```{r}
+# Save results to disk in order to read from Python later
+
+save(results, file = "granulo/results//results.RData")
+```
