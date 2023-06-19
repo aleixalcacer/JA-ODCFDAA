@@ -31,9 +31,6 @@ for (i in 1:nrep){
 
 
 
-
-
-
 library(archetypes)
 source("LstepArchetypesMod.R")
 
@@ -41,7 +38,7 @@ X=cxyz
 
 #Find archetypes and screeplot (Step 2)
 library(DDoutlier)
-nada=10 
+nada=4 
 norep=20
 set.seed(1234)
 ai=LstepArchetypesMod(X, 1:nada, nrep=norep)
@@ -50,10 +47,10 @@ ai=LstepArchetypesMod(X, 1:nada, nrep=norep)
 screeplot(ai)
 
 #Choose the number of initial archetypes
-e=3 
+e=2 
 
-vi=2 
-vf=5 
+vi=2
+vf=2 
 #AA+ k-NN 
 auci=c()
 
@@ -73,8 +70,8 @@ pei=pei+KNN_SUM(a$alphas, k=i)
 
 
 #####Converting into binary labels: 
-vi=2 
-vf=5 
+vi=2
+vf=2 
 h=1
 pii=matrix(0,nrow=(vf-vi+1),ncol=dim(X)[1])
 for (i in vi:vf){
@@ -96,8 +93,6 @@ h=h+1
 
 as.integer(apply(pii,2,sum)>(((vf-vi+1))*0.5))
 
-#Summary Table
-tapply(pei,g, summary)
 
 #POLR
 m <- polr(ordered(g) ~ pei, Hess=TRUE)
