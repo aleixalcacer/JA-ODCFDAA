@@ -1,0 +1,150 @@
+# Parameter interpretation
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+## Clusters definition
+
+```{r}
+library(tidyverse)
+
+set.seed(1234)
+
+p <- 25
+n <- 100
+t <- seq(0, 1, len = p)
+d <- as.matrix(dist(t, upper = T, diag = T))
+
+# Generate model
+t.cov <- 0.03 * exp(-1 / 0.3 * d)  # covariance function in time
+L <- chol(t.cov)  # Cholesky decomposition
+
+# Generate data
+mu <- function(t) {
+    t * (1 - t) ^ (3 / 2)
+}
+
+
+# C1
+n1 = 20
+e = matrix(rnorm(n1 * p), p, n1)
+y1 <- mu(t) + t(L) %*% e
+
+# C2 
+n2 = 20
+e = matrix(rnorm(n2 * p), p, n2)
+y2 <- -1 + 10 * mu(t) + t(L) %*% e
+
+# C3
+n3 = 20
+e = matrix(rnorm(n3 * p), p, n3)
+y3 <- 2 + mu(t) + t(L) %*% e
+# C4
+n4 = 5
+e = matrix(rnorm(n4 * p), p, n4)
+y4 <- 10 * mu(t - .2) + t(L) %*% e
+
+# C5
+n5 = 1
+e = matrix(rnorm(n5 * p), p, n5)
+y5 <- -2 + 3 * mu(t)^(1/2) + t(L) %*% e
+
+# combine data
+
+y <- cbind(y1, y2, y3, y4, y5)
+
+labels <- c(rep(1, n1), rep(2, n2), rep(3, n3), rep(4, n4), rep(5, n5))
+```
+
+
+```{r}
+df <- data.frame(data)
+colnames(df) <- 1:ncol(data)
+df$obs <- 1:nrow(data)
+df$label <- labels
+
+df <- df %>% gather(key = "time", value = "value", -obs, -label)
+df$time <- as.integer(df$time)
+
+g <- ggplot(df, aes(x = time, y = value, group = obs)) +
+    geom_line(aes(color = factor(label))) +
+    # hide legend for alpha
+    guides(alpha = FALSE) +
+    # hide axis titles
+    xlab(NULL) + ylab(NULL) +
+    # empty background
+    theme_void() +
+    theme(legend.position = "none")
+g
+ggplot2::ggsave("simulated-data/results/figures/interpretation-data.pdf", g, width = 8, height = 5)
+
+```
+
+```{r}
+data <- t(y)
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+library(archetypes)
+source("methods/methods.R")
+
+ai = LstepArchetypesMod(data, 1:8, nrep = 3, verbose = FALSE)
+
+screeplot(ai)
+```
+```{r}
+plot_outliers <- function(data, aaknn) {
+    outliers <- rep("lightgrey", nrow(data))
+    outliers[aaknn] <- "steelblue"
+    alphas <- rep(0, nrow(data))
+    alphas[aaknn] <- 1
+    # plot data matrix using ggplot2
+    
+    df <- data.frame(data)
+    colnames(df) <- 1:ncol(data)
+    df$obs <- 1:nrow(data)
+    df$outlier <- outliers
+    df$alpha <- alphas
+    
+    df <- df %>% gather(key = "time", value = "value", -obs, -outlier, -alpha)
+    df$time <- as.integer(df$time)
+    
+    g<- ggplot(df, aes(x = time, y = value, group = obs)) +
+        geom_line(aes(color = outlier, alpha = alpha)) +
+        scale_color_manual(values = c("lightgrey", "steelblue")) +
+        scale_alpha_continuous(range = c(0.25, 1)) +
+        # hide legend for alpha
+        guides(alpha = FALSE) +
+        # hide axis titles
+        xlab(NULL) + ylab(NULL) +
+        # empty background
+        theme_void()
+    g
+}
+```
+
+```{r}
+aaknn <- AAKNN(data, e=2, narch = 4, vi=1, vf=1, ai=ai)
+# set aaknn values as outliers (1)
+g <- plot_outliers(data, aaknn)
+ggsave("simulated-data/results/figures/interpretation-1.pdf", g, width = 6, height = 4)
+```
+
+```{r}
+aaknn <- AAKNN(data, e=2, narch = 4, vi=1, vf=4, ai=ai)
+# set aaknn values as outliers (1)
+g <- plot_outliers(data, aaknn)
+ggsave("simulated-data/results/figures/interpretation-2.pdf", g, width = 6, height = 4)
+```
+
+```{r}
+aaknn <- AAKNN(data, e=2, narch = 4, vi=5, vf=8, ai=ai)
+# set aaknn values as outliers (1)
+g <- plot_outliers(data, aaknn)
+ggsave("simulated-data/results/figures/interpretation-3.pdf", g, width = 6, height = 4)
+```
+

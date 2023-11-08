@@ -65,6 +65,8 @@ plot_results <- function(outlier_type) {
 # plot_results("shape")
 ```
 
+# Table 
+
 ```{r}
 
 types = c("amplitude", "shift", "shift-h", "shape", "isolated")
@@ -95,3 +97,77 @@ col.names = c("Method", rep(c("$p_t$", "$p_f$"), length(types)))
 
 r <- knitr::kable(df_latex, format="latex", col.names = col.names, align = "lcccccccccc")
 ```
+
+```{r}
+
+types = c("amplitude", "shift", "shift-h", "shape", "isolated")
+clusters = c("single", "multiple")
+df_heat = NULL
+for (outlier_type in types) {
+    for (cluster_type in clusters) {
+        data <- read_csv(paste("results/csv/", outlier_type, "-", cluster_type, "-cluster.csv", sep=""))
+        df_i <- data %>% mutate(mean = round(mean, 2), sd = round(sd, 2)) %>%
+            unite("result", mean, sd, sep = " (", remove = FALSE) %>%
+            mutate(result = paste(result, ")", sep = ""))
+        # add type
+        df_i <- df_i %>% mutate(type = outlier_type, cluster = cluster_type)
+
+        df_heat <- bind_rows(df_heat, df_i)
+    }
+}
+
+df_heat <- df_heat %>%
+    mutate(cluster = factor(cluster, levels = c("single", "multiple"))) %>%
+    mutate(rate = factor(rate, levels = c("true positive", "false positive"))) %>%
+    mutate(type = factor(type, levels = c("amplitude", "shift", "shift-h", "shape", "isolated"))) %>%
+    # set cluster names
+    mutate(cluster = fct_recode(cluster, "Scenario 1" = "single", "Scenario 2" = "multiple")) %>%
+    # set rate names
+    mutate(rate = fct_recode(rate, "True positive" = "true positive", "False positive" = "false positive")) %>%
+    # set type names
+    mutate(type = fct_recode(type, "Amplitude" = "amplitude", "V. Shift" = "shift", "H. Shift" = "shift-h", "Shape" = "shape", "Isolated" = "isolated")) %>%
+    mutate(method = fct_recode(method, "FOADATH" = "FOADA-TH", "FOADARMAH" = "FOADA-RMAH", "CRO-FADALARA" = "FADALARA",
+                               "FAA+kNN" = "AAKNN"))
+```
+
+
+```{r}
+library(ggplot2)
+
+# facet cluster variable
+
+
+g <- ggplot(df_heat,
+            aes(y = method, x = type, fill = mean)) +
+    geom_tile() +
+    geom_text(aes(label = result), size = 2) +
+    scale_fill_gradient(low = "white", high = "steelblue", limits = c(0, 1)) +
+    theme_light() +
+    theme(
+        panel.border = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.title.x = element_text(size = rel(1), margin = margin(t = 20, r = 0, b = 0, l = 0)),
+        axis.title.y = element_text(size = rel(1), margin = margin(t = 0, r = 20, b = 0, l = 0)),
+    ) +
+    #mutate x labels
+    scale_x_discrete(expand = c(0, 0)) +
+    scale_y_discrete(expand = c(0, 0)) +
+    labs(
+        fill = "Accuracy rate",
+    ) +
+    ylab("Method") +
+    xlab("Outlier type") +
+    # facet grid agains cluster and rate and set custom labels
+    facet_grid(rate ~ cluster, scales = "free", space = "free")
+    
+
+g
+```
+
+```{r}
+ggsave(file="results/figures/heatmap.pdf", plot=g, width=11, height=6)
+```
+

@@ -19,8 +19,19 @@ dataset <- read_table("planes/data/Plane_TRAIN.txt", col_names = FALSE)
 colnames(dataset) <- c("category", 1:145)
 
 dataset <- dataset %>% add_column(alpha=1, .after = 1)
+
+dim(dataset)
 ```
 
+```{r}
+# get a description of the dataset
+
+dataset %>% 
+    group_by(category) %>%
+    summarise(
+        n = n()
+    )
+```
 
 ```{r}
 
@@ -57,7 +68,10 @@ p_data <- s_dataset %>%
 
 ```{r}
 plot_dataset(dataset)
-ggsave("planes/results/planes.png")
+ggsave("planes/results/planes.pdf", width = 10, height = 6)
+```
+
+```{r}
 ```
 
 ```{r}
@@ -74,7 +88,7 @@ plot_outliers <- function(data, outliers) {
         dplyr::select(-rowname)
     
     plot_dataset(data) +
-        scale_color_manual(values=c("grey", "deeppink"))    
+        scale_color_manual(values=c("grey", "steelblue"))    
 }
 
 generate_outliers_dataset <- function(data, outliers, method) {
@@ -93,23 +107,23 @@ data <- as.matrix(dataset[-c(1:2)])
 
 ```{r}
 aaknn <- AAKNN(data)
-d1 <- generate_outliers_dataset(dataset, aaknn, "FAA + KNN")
+d1 <- generate_outliers_dataset(dataset, aaknn, "FAA+kNN")
 plot_outliers(dataset, aaknn)
-ggsave("planes/results/FAAKNN.png")
+# ggsave("planes/results/FAAKNN.png")
 ```
 
 ```{r}
 aaknn <- OTRESH(data)
 d2 <- generate_outliers_dataset(dataset, aaknn, "FOADATH")
 plot_outliers(dataset, aaknn)
-ggsave("planes/results/FOADATH.png")
+# ggsave("planes/results/FOADATH.png")
 ```
 
 ```{r}
 aaknn <- OMULTI(data)
 d3 <- generate_outliers_dataset(dataset, aaknn, "FOADARMAH")
 plot_outliers(dataset, aaknn)
-ggsave("planes/results/FOADARMAH.png")
+# ggsave("planes/results/FOADARMAH.png")
 ```
 
 
@@ -117,7 +131,7 @@ ggsave("planes/results/FOADARMAH.png")
 aaknn <- RMAH(data, t = 1:144)
 d4 <- generate_outliers_dataset(dataset, aaknn, "RMAH")
 plot_outliers(dataset, aaknn)
-ggsave("planes/results/RMAH.png")
+# ggsave("planes/results/RMAH.png")
 ```
 
 
@@ -125,24 +139,24 @@ ggsave("planes/results/RMAH.png")
 ise <- ISE(data, t = 1:144)
 d5 <- generate_outliers_dataset(dataset, ise, "ISFE")
 plot_outliers(dataset, ise)
-ggsave("planes/results/ISFE.png")
+# ggsave("planes/results/ISFE.png")
 
 ```
 
 ```{r}
-ise <- OGH(data, t = 1:144)
-d6 <- generate_outliers_dataset(dataset, ise, "OUG")
+ogh <- OGH(data, t = 1:144)
+d6 <- generate_outliers_dataset(dataset, ogh, "OUG")
 plot_outliers(dataset, ise)
-ggsave("planes/results/OUG.png")
+# ggsave("planes/results/OUG.png")
 
 ```
 
 
 ```{r}
 pond <- FADALARA(data, 2)
-d7 <- generate_outliers_dataset(dataset, pond, "CROFADALARA")
+d7 <- generate_outliers_dataset(dataset, pond, "CRO-FADALARA")
 plot_outliers(dataset, pond)
-ggsave("planes/results/CROFADALARA.png")
+# ggsave("planes/results/CROFADALARA.png")
 ```
 
 
@@ -150,7 +164,7 @@ ggsave("planes/results/CROFADALARA.png")
 fom <- FOM(data)
 d8 <- generate_outliers_dataset(dataset, fom, "FOM")
 plot_outliers(dataset, fom)
-ggsave("planes/results/FOM.png")
+# ggsave("planes/results/FOM.png")
 
 ```
 
@@ -158,12 +172,37 @@ ggsave("planes/results/FOM.png")
 fb <- FB(data)
 d9 <- generate_outliers_dataset(dataset, fb, "FB")
 plot_outliers(dataset, fb)
-ggsave("planes/results/FB.png")
+# ggsave("planes/results/FB.png")
 
 ```
 
 ```{r}
-d <- bind_rows(d1, d2, d3, d4, d5, d6, d7, d8, d9)
+trimknn <- TRIMKMEANS(data, k=7, out_rate=0.05)
+d10 <- generate_outliers_dataset(dataset, trimknn, "TRIMKMEANS")
+plot_outliers(dataset, trimknn)
+# ggsave("planes/results/TRIMKMEANS.png")
+```
+
+```{r}
+trim <- TRIM(data, t = 1:144, out_rate=0.05)
+d11 <- generate_outliers_dataset(dataset, trim, "TRIM")
+plot_outliers(dataset, trim)
+```
+```{r}
+pond <- POND(data, t = 1:144, out_rate = 0.05)
+d12 <- generate_outliers_dataset(dataset, pond, "POND")
+plot_outliers(dataset, pond)
+```
+
+```{r}
+hdr <- HDR(data, t = 1:144, out_rate = 0.05)
+d13 <- generate_outliers_dataset(dataset, hdr, "HDR")
+plot_outliers(dataset, hdr)
+```
+
+
+```{r}
+d <- bind_rows(d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13)
 ```
 
 ```{r}
@@ -195,12 +234,12 @@ g <- ggplot(p_data %>% group_by(category), aes(x = name, y = value, color = cate
     xlab("time") +
     ylab("value") +
     facet_wrap(~method) +
-    scale_color_manual(values=c("grey", "deeppink"))    
+    scale_color_manual(values=c("grey", "steelblue"))    
 
 g
 
 
-ggsave("planes/results/outliers.png", width = 8, height = 5)
+ggsave("planes/results/outliers.pdf", width = 14, height = 8)
 ```
 
 

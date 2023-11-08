@@ -25,3 +25,5 @@ FOM,0,0,false positive,multiple,FALSE
 FB,0,0,false positive,multiple,FALSE
 HDR,0.021052631578947368,0.014886458551295736,false positive,multiple,TRUE
 AAKNN,0.056842105263157895,0.07577647711827698,false positive,multiple,FALSE
+TRIMKMEANS,1,0,true positive,multiple,TRUE
+TRIMKMEANS,0,0,false positive,multiple,TRUE

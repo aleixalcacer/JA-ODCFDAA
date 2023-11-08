@@ -40,12 +40,11 @@ source("methods/methods.R")
 
 ```{r}
 data <- as.matrix(g[, seq_len(ncol(g) - 1)])
-data
 ```
-
+data
 ```{r}
 t <- seq_len(ncol(data))
-aaknn <- AAKNN(data, narch = 4, vi = 3, vf = 5)
+aaknn <- AAKNN(data, e=3, narch = 4, vi = 1, vf = 3)
 foada_th <- OTRESH(data)
 foada_rmah <- OMULTI(data)
 rmah <- RMAH(data, t)
@@ -54,16 +53,27 @@ oug <- OGH(data, t)
 fadalara <- FADALARA(data, k=2)
 fom <- FOM(data)
 fb <- FB(data)
+
+out_rate = 0.015
+trimkmeans <- TRIMKMEANS(data, k=3, out_rate = out_rate)
+trim <- TRIM(data, t, out_rate = out_rate)
+pond <- POND(data, t, out_rate = out_rate)
+hdr <- HDR(data, t, out_rate = out_rate)
 ```
+
+```{r}
+hdr
+```
+
 
 ```{r}
 # Save the results in a list using the name of the method as the name of the list element (capital letters)
 
-results <- list("FAA + KNN" = aaknn, "FOADATH" = foada_th, "FOADARMAH" = foada_rmah, "RMAH" = rmah, "ISFE" = isfe, "OUG" = oug, "CROFADALARA" = fadalara, "FOM" = fom, "FB" = fb)
+results <- list("FAA+kNN" = aaknn, "FOADATH" = foada_th, "FOADARMAH" = foada_rmah, "RMAH" = rmah, "ISFE" = isfe, "OUG" = oug, "CRO-FADALARA" = fadalara, "FOM" = fom, "FB" = fb, "TRIMKMEANS" = trimkmeans, "TRIM" = trim, "POND" = pond, "HDR" = hdr)
 ```
 
 ```{r}
 # Save results to disk in order to read from Python later
 
-save(results, file = "granulo/results//results.RData")
+save(results, file = "granulo/results/results2.RData")
 ```

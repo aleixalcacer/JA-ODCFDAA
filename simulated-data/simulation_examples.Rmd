@@ -16,6 +16,35 @@ library(tidyverse)
 library(reshape2)
 library(ggplot2)
 ```
+```{r}
+plot_example <- function(y, out, n, type) {
+    data = t(y)
+
+    y_labels = rep(0, n)
+    y_labels[out] = 1
+    
+    p_data <- as_tibble(data) %>% add_column(class = y_labels, .before = T) %>% rownames_to_column(var = "id")
+    p_values <- as.matrix(p_data[c(-1, -2)])
+    
+    m_data <- p_data %>% melt(id.vars = c("id", "class"))
+    
+    g <- ggplot(m_data, aes(x=variable, y=value, group=id)) +
+        geom_line(aes(color=factor(class),  alpha=class)) +
+        labs(color='Class') +
+        theme_void() +
+            scale_colour_manual(values=c("gray", "steelblue"), labels=c("No Outlier", "Outlier")) +
+        scale_alpha(guide = 'none')
+    
+    # use type var
+    ggsave(file=paste("results/examples/", type, "-example.svg", sep = ""), plot=g, width=5, height=4)
+    ggsave(file=paste("results/examples/", type, "-example.png", sep = ""), plot=g, width=5, height=4)
+    ggsave(file=paste("results/examples/", type, "-example.pdf", sep = ""), plot=g, width=5, height=4)
+    
+    g
+    
+    
+}
+```
 
 ## Amplitude
 
@@ -58,26 +87,8 @@ for (i in out) {
     y[, i] = 5 * mu + t(L) %*% e
 }
 
-data = t(y)
+g <- plot_example(y, out, n, "amplitude")
 
-y_labels = rep(0, n)
-y_labels[out] = 1
-
-p_data <- as_tibble(data) %>% add_column(class = y_labels, .before = T) %>% rownames_to_column(var = "id")
-p_values <- as.matrix(p_data[c(-1, -2)])
-
-m_data <- p_data %>% melt(id.vars = c("id", "class"))
-
-g <- ggplot(m_data, aes(x=variable, y=value, group=id)) +
-    geom_line(aes(color=factor(class),  alpha=class)) +
-    labs(color='Class') +
-    theme_void() +
-        scale_colour_manual(values=c("darkviolet", "deeppink"), labels=c("No Outlier", "Outlier")) +
-    scale_alpha(guide = 'none')
-    
-
-ggsave(file="results/examples/amplitude-example.svg", plot=g, width=5, height=4)
-ggsave(file="results/examples/amplitude-example.png", plot=g, width=5, height=4)
 ```
 
 ## Shift
@@ -121,25 +132,8 @@ for (i in out) {
     y[, i] = 3 + mu + t(L) %*% e
 }
 
-data = t(y)
+g <- plot_example(y, out, n, "shift")
 
-y_labels = rep(0, n)
-y_labels[out] = 1
-
-p_data <- as_tibble(data) %>% add_column(class = y_labels, .before = T) %>% rownames_to_column(var = "id")
-p_values <- as.matrix(p_data[c(-1, -2)])
-
-m_data <- p_data %>% melt(id.vars = c("id", "class"))
-
-g <- ggplot(m_data, aes(x=variable, y=value, group=id)) +
-    geom_line(aes(color=factor(class), alpha=class)) +
-    labs(color='Class') +
-    theme_void() +
-        scale_colour_manual(values=c("darkviolet", "deeppink"), labels=c("No Outlier", "Outlier")) +
-    scale_alpha(guide = 'none')
-
-ggsave(file="results/examples/shift-example.svg", plot=g, width=5, height=4)
-ggsave(file="results/examples/shift-example.png", plot=g, width=5, height=4)
 ```
 
 ## Shift (horizontal)
@@ -188,25 +182,10 @@ for (i in out) {
     y[, i] = mu3 + t(L) %*% e
 }
 
-data = t(y)
 
-y_labels = rep(0, n)
-y_labels[out] = 1
+g <- plot_example(y, out, n, "shift-h")
 
-p_data <- as_tibble(data) %>% add_column(class = y_labels, .before = T) %>% rownames_to_column(var = "id")
-p_values <- as.matrix(p_data[c(-1, -2)])
 
-m_data <- p_data %>% melt(id.vars = c("id", "class"))
-
-g <- ggplot(m_data, aes(x=variable, y=value, group=id)) +
-    geom_line(aes(color=factor(class), alpha=class)) +
-    labs(color='Class') +
-    theme_void() +
-        scale_colour_manual(values=c("darkviolet", "deeppink"), labels=c("No Outlier", "Outlier")) +
-    scale_alpha(guide = 'none')
-
-ggsave(file="results/examples/shift-h-example.svg", plot=g, width=5, height=4)
-ggsave(file="results/examples/shift-h-example.png", plot=g, width=5, height=4)
 ```
 
 
@@ -248,25 +227,8 @@ for (i in out){
     y[,i] =  y[, i] + 10 * c(dnorm(iso_interval), rep(0, p - length(iso_interval)))
 }
         
-data = t(y)
+g <- plot_example(y, out, n, "isolated")
 
-y_labels = rep(0, n)
-y_labels[out] = 1
-
-p_data <- as_tibble(data) %>% add_column(class = y_labels, .before = T) %>% rownames_to_column(var = "id")
-p_values <- as.matrix(p_data[c(-1, -2)])
-
-m_data <- p_data %>% melt(id.vars = c("id", "class"))
-
-g <- ggplot(m_data, aes(x=variable, y=value, group=id)) +
-    geom_line(aes(color=factor(class),  alpha=class)) +
-    labs(color='Class') +
-    theme_void() +
-    scale_colour_manual(values=c("darkviolet", "deeppink"), labels=c("No Outlier", "Outlier")) +
-    scale_alpha(guide = 'none')
-
-ggsave(file="results/examples/isolated-example.svg", plot=g, width=5, height=4)
-ggsave(file="results/examples/isolated-example.png", plot=g, width=5, height=4)
 ```
 
 
@@ -310,23 +272,7 @@ for (i in out){
     y[,i] =  mu + t(L) %*% (rnorm(p) / 2)
 }
 
-data = t(y)
+g <- plot_example(y, out, n, "shape")
 
-y_labels = rep(0, n)
-y_labels[out] = 1
 
-p_data <- as_tibble(data) %>% add_column(class = y_labels, .before = T) %>% rownames_to_column(var = "id")
-p_values <- as.matrix(p_data[c(-1, -2)])
-
-m_data <- p_data %>% melt(id.vars = c("id", "class"))
-
-g <- ggplot(m_data, aes(x=variable, y=value, group=id)) +
-    geom_line(aes(color=factor(class), alpha=class)) +
-    labs(color='Class') +
-    theme_void() +
-    scale_colour_manual(values=c("darkviolet", "deeppink"), labels=c("No Outlier", "Outlier")) +
-    scale_alpha(guide = 'none')
-
-ggsave(file="results/examples/shape-example.svg", plot=g, width=5, height=4)
-ggsave(file="results/examples/shape-example.png", plot=g, width=5, height=4)
 ```

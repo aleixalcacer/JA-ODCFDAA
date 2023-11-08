@@ -18,6 +18,7 @@ library(ks)
 library(cluster)
 library(fda.usc)
 library(DDoutlier)
+library(trimcluster)
 
 
 OTRESH <- function(data, th = 0.5) {
@@ -109,41 +110,43 @@ ISE <- function(data, t) {
 }
 
 
-LRT <- function(data, t, out_rate = 0.05) {
+LRT <- function(data, t, out_rate = 0.1) {
     Datosf <- fdata(data, t)
     out <-
         outliers.lrt(
             Datosf,
             nb = 200,
-            smo = 0.05,
+            smo = 0.1,
             dfunc = depth.mode,
             trim = out_rate
         )$outliers
     return(out)
 }
 
-TRIM <- function(data, t, out_rate = 0.05) {
+TRIM <- function(data, t, out_rate = 0.1) {
     # Depth Based Trimming (Febrero, Galeano, Gonzalez-Manteiga, 2008)
-    
+
     Datosf <- fdata(data, t)
     out <-
         outliers.depth.trim(
             Datosf,
             nb = 200,
-            smo = 0.05,
+            smo = 0.1,
             trim = out_rate,
             dfunc = depth.mode
         )$outliers
+    
     return(out)
 }
 
-POND <- function(data, t) {
+POND <- function(data, t, out_rate=0.1) {
     # Depth Based Weighting (Febrero, Galeano, Gonzalez-Manteiga, 2008)
     Datosf <- fdata(data, t)
     out <-
         outliers.depth.pond(Datosf,
                             nb = 200,
-                            smo = 0.05,
+                            smo = 0.1,
+                            trim = out_rate,
                             dfunc = depth.mode)$outliers
 }
 
@@ -186,6 +189,23 @@ HDR <- function(data, t, out_rate) {
     return(out)
 }
 
+TRIMKMEANS <- function(data, k, out_rate=0.1) {
+    # Trimmed k-means (Cuevas, Febrero, Fraiman, Rousseeuw 2007)
+    set.seed(1234)
+    out <-
+        trimkmeans(
+            data,
+            k=k,
+            runs=3,
+            trim = out_rate,
+        )$classification
+    
+    # return out indices where the outliers are
+    out = which(out == k+1)
+
+    return(out)
+}
+        
 AAKNN <- function(data,
                   e = 2,
                   narch = 6,
